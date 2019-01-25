@@ -38,6 +38,7 @@
     "@vaadin/vaadin-combo-box": "^4.2.2",
     "@vaadin/vaadin-grid": "^5.2.7",
     "@vaadin/vaadin-text-field": "^2.1.7",
+    "class-validator": "^0.9.1",
     "lit-element": "2.0.0-rc.3"
   }
 }

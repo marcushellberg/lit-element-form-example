@@ -9,6 +9,7 @@
     "experimentalDecorators": true,
     "strictNullChecks": true,
     "noUnusedLocals": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "strict": true
   }
 }

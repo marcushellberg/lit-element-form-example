@@ -1,21 +1,22 @@
-import { LitElement, html, property } from 'lit-element';
+import { LitElement, html, property, css } from 'lit-element';
 import { SnackOrder } from '../models/snack-order';
 import { validate } from 'class-validator';
 import '@vaadin/vaadin-text-field';
 import '@vaadin/vaadin-button';
 import '@vaadin/vaadin-combo-box';
 
-class SnackOrderFormState {
-  availableSnacks: string[] = [];
-  snackType = '';
-  errors: string[] = [];
-  order = new SnackOrder();
-  buttonDisabled = true;
-}
-
 class SnackOrderForm extends LitElement {
   @property()
-  private state = new SnackOrderFormState();
+  private availableSnacks: string[] = [];
+  @property()
+  private snackType = '';
+  @property()
+  private errors: string[] = [];
+  @property()
+  private order = new SnackOrder();
+  @property()
+  private buttonDisabled = true;
+
   private allSnacks = new Map<string, string[]>();
 
   constructor() {
@@ -25,30 +26,32 @@ class SnackOrderForm extends LitElement {
     this.allSnacks.set('Drinks', ['Soda', 'Water', 'Coffee', 'Tea']);
   }
 
-  render() {
-    const { order, snackType, buttonDisabled, availableSnacks, errors } = this.state;
+  static styles = [
+    css`
+      .form {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 200px);
+        gap: 10px;
+        align-items: baseline;
+        padding-bottom: 10px;
+      }
+    `
+  ];
 
+  render() {
     return html`
-      <style>
-        .form {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, 200px);
-          gap: 10px;
-          align-items: baseline;
-          padding-bottom: 10px;
-        }
-      </style>
+      poo
       <div class="form" @change=${this.formValueUpdated}>
         <vaadin-text-field
           label="Name"
           name="name"
-          .value=${order.name}
+          .value=${this.order.name}
           required
         ></vaadin-text-field>
         <vaadin-text-field
           label="Quantity"
           name="quantity"
-          .value=${order.quantity}
+          .value=${this.order.quantity}
           pattern="\\d+"
           required
           prevent-invalid-input
@@ -56,87 +59,78 @@ class SnackOrderForm extends LitElement {
         ></vaadin-text-field>
         <vaadin-combo-box
           label="Type"
-          .value=${snackType}
+          .value=${this.snackType}
           .items=${Array.from(this.allSnacks.keys())}
           @change=${this.snackTypeChanged}
         ></vaadin-combo-box>
         <vaadin-combo-box
           label="Snack"
           name="snack"
-          .value=${order.snack}
+          .value=${this.order.snack}
           required
-          .items=${availableSnacks}
-          ?disabled=${availableSnacks.length === 0}
+          .items=${this.availableSnacks}
+          ?disabled=${this.availableSnacks.length === 0}
         ></vaadin-combo-box>
 
-        <vaadin-button theme="primary" @click=${this.placeOrder} ?disabled=${buttonDisabled}
+        <vaadin-button theme="primary" @click=${this.placeOrder} ?disabled=${this.buttonDisabled}
           >Order</vaadin-button
         >
       </div>
       <div class="errors">
-        ${
-          errors.map(
-            error =>
-              html`
-                <p>${error}</p>
-              `
-          )
-        }
+        ${this.errors.map(
+          error =>
+            html`
+              <p>${error}</p>
+            `
+        )}
       </div>
     `;
   }
 
   async formValueUpdated(e: { target: HTMLInputElement }) {
     if (e.target.name) {
-      this.state = {
-        ...this.state,
-        order: new SnackOrder({
-          ...this.state.order,
-          [e.target.name]: e.target.value
-        })
-      };
+      this.order = new SnackOrder({
+        ...this.order,
+        [e.target.name]: e.target.value
+      });
 
       this.updateButtonState();
     }
   }
 
   async updateButtonState() {
-    this.state = {
-      ...this.state,
-      buttonDisabled: (await validate(this.state.order)).length > 0
-    };
+    this.buttonDisabled = (await validate(this.order)).length > 0;
   }
 
   snackTypeChanged(e: { target: HTMLInputElement }) {
-    const snackType = e.target.value;
-    const availableSnacks = this.allSnacks.get(snackType) || [];
-    this.state = {
-      ...this.state,
-      snackType,
-      availableSnacks
-    };
+    this.snackType = e.target.value;
+    this.availableSnacks = this.allSnacks.get(this.snackType) || [];
   }
 
   async placeOrder() {
-    const errors = await validate(this.state.order);
+    const errors = await validate(this.order);
     if (errors.length > 0) {
-      this.state = {
-        ...this.state,
-        errors: errors.map(e =>
-          Object.entries(e.constraints)
-            .map(([, msg]) => msg)
-            .join(', ')
-        )
-      };
+      this.errors = errors.map(e =>
+        Object.entries(e.constraints)
+          .map(([, msg]) => msg)
+          .join(', ')
+      );
     } else {
       this.dispatchEvent(
         new CustomEvent('order', {
-          detail: this.state.order,
+          detail: this.order,
           bubbles: true
         })
       );
-      this.state = new SnackOrderFormState();
+      this.reset();
     }
+  }
+
+  reset() {
+    this.order = new SnackOrder();
+    this.errors = [];
+    this.snackType = '';
+    this.buttonDisabled = true;
   }
 }
 

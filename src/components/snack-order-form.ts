@@ -40,7 +40,6 @@ class SnackOrderForm extends LitElement {
 
   render() {
     return html`
-      poo
       <div class="form" @change=${this.formValueUpdated}>
         <vaadin-text-field
           label="Name"
